@@ -1,305 +1,689 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Will you be my Valentine?</title>
-
-  <!-- Confetti library -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1"/>
+  <title>Arno & Knarik — Wedding Invitation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg1: #ffd6e7;
-      --bg2: #ffeef6;
-      --card: #ffffffcc;
-      --yes: #ff3b7a;
-      --yesHover: #ff1f68;
+      --gold: #c9a84c; --gold-light: #e2c97e; --gold-dim: rgba(201,168,76,0.18);
+      --cream: #faf7ef; --ink: #1c1710; --mid: #5a4e38; --muted: #9a8f78; --white: #ffffff;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--cream); color: var(--ink); font-family: 'Lato', sans-serif; font-weight: 300; overflow-x: hidden; }
+
+    /* LANG BAR */
+    #lang-bar { position: fixed; top: 1.2rem; right: 1.5rem; z-index: 999; display: flex; gap: 0.5rem; }
+    .lang-btn { background: rgba(250,247,239,0.88); border: 1px solid var(--gold); color: var(--mid); font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.1em; padding: 0.3rem 0.65rem; cursor: pointer; border-radius: 2px; transition: all 0.25s; backdrop-filter: blur(6px); }
+    .lang-btn.active, .lang-btn:hover { background: var(--gold); color: var(--white); }
+
+    /* PETALS */
+    .petal { position: fixed; border-radius: 50% 0 50% 0; background: rgba(201,168,76,0.2); pointer-events: none; animation: petalFall linear infinite; z-index: 0; }
+    @keyframes petalFall {
+      0%   { transform: translateY(-5vh) rotate(0deg) translateX(0); opacity:0; }
+      10%  { opacity: 1; }
+      50%  { transform: translateY(50vh) rotate(180deg) translateX(25px); }
+      90%  { opacity: 0.4; }
+      100% { transform: translateY(105vh) rotate(360deg) translateX(-10px); opacity:0; }
     }
 
-    * { box-sizing: border-box; }
+    /* ENVELOPE */
+    #envelope-screen { position: fixed; inset: 0; background: #1c1710; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 900; transition: opacity 0.8s ease, transform 0.8s ease; }
+    #envelope-screen.hidden { opacity: 0; pointer-events: none; transform: scale(1.06); }
+    .envelope-wrap { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2rem; }
+    .envelope-svg { width: clamp(220px, 45vw, 320px); filter: drop-shadow(0 12px 40px rgba(201,168,76,0.3)); }
+    .open-hint { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.35em; color: var(--gold-light); text-transform: uppercase; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+    #env-flap { transform-origin: 160px 60px; transition: transform 0.6s cubic-bezier(.4,0,.2,1); }
+    .envelope-wrap:hover #env-flap { transform: rotateX(-140deg); }
 
-    body {
-      margin: 0;
+    /* HERO — full screen with background photo */
+    #hero {
       min-height: 100svh;
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at top, var(--bg2), var(--bg1));
-      font-family: system-ui, sans-serif;
-      overflow: hidden;
-      padding: 16px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 1.5rem 4rem;
+      position: relative; overflow: hidden;
+      background-color: red;
+      background-image: 
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,0.35) 0%,
+          rgba(0,0,0,0.45) 50%,
+          rgba(0,0,0,0.65) 100%
+        ),
+        url("main_3_2.jpg");
+      background-position: center top;
+      background-size: cover;
+      background-repeat: no-repeat;
     }
-
-    /* FULL-SCREEN CONFETTI CANVAS */
-    #confettiCanvas {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    .card {
-      width: min(720px, 92vw);
-      padding: 26px 22px;
-      background: var(--card);
-      backdrop-filter: blur(10px);
-      border-radius: 22px;
-      text-align: center;
-      box-shadow: 0 18px 60px rgba(0,0,0,.15);
-    }
-
-    .art {
-      width: min(260px, 80vw);
-      margin: 0 auto 10px;
-      display: block;
-      filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
-    }
-
-    h1 {
-      font-size: clamp(26px, 4vw, 44px);
-      margin: 12px 0 18px;
-    }
-
-    .button-zone {
-      position: relative;
-      width: min(520px, 92%);
-      height: 150px;
-      margin: 0 auto;
-      touch-action: none;
-    }
-
-    button {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 16px 24px;
-      font-size: 18px;
-      font-weight: 800;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,.14);
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      transition: transform .12s ease, background .12s ease;
-    }
-
-    #yesBtn {
-      left: 18%;
-      background: var(--yes);
-      color: #fff;
-    }
-    #yesBtn:hover { background: var(--yesHover); }
-
-    #noBtn {
-      left: 62%;
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    .hint {
-      margin-top: 10px;
-      font-size: 13px;
-      opacity: .7;
-    }
-
-    .result {
+    #hero-bg {
       display: none;
-      margin-top: 18px;
-      animation: pop .35s ease;
+    }
+    /* Dark overlay so text stays readable over any photo */
+    #hero-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: transparent;
+    }
+    /* Placeholder label shown when no photo is set */
+    /* #hero-bg-label {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.3em;
+      color: rgba(201,168,76,0.5); text-transform: uppercase; pointer-events: none;
+      border: 2px dashed rgba(201,168,76,0.25);
+      margin: 1.5rem;
+    } */
+    /* Hide label once a real photo is loaded */
+    #hero-bg.has-photo #hero-bg-label { display: none; }
+
+    #hero > * { position: relative; z-index: 2; }
+
+    .hero-top-line { font-family: 'Cinzel', serif; font-size: clamp(0.6rem, 1.8vw, 0.78rem); letter-spacing: 0.4em; color: rgba(255,255,255,0.75); text-transform: uppercase; opacity: 0; animation: fadeUp 1s ease 0.4s forwards; }
+    .divider-row { display: flex; align-items: center; gap: 1rem; margin: 1.2rem auto; width: min(340px, 80vw); opacity: 0; animation: fadeUp 1s ease 0.6s forwards; }
+    .divider-row::before, .divider-row::after { content:''; flex:1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent); }
+
+    h1.names { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-style: italic; font-size: clamp(3.5rem, 12vw, 7rem); line-height: 1.05; color: #ffffff; text-shadow: 0 2px 24px rgba(0,0,0,0.5); opacity: 0; animation: fadeUp 1.2s ease 0.7s forwards; }
+    h1.names .amp { font-style: italic; color: #ffffff; }
+
+    .hero-date { font-family: 'Cinzel', serif; font-size: clamp(1rem, 3vw, 1.4rem); font-weight: 500; letter-spacing: 0.12em; color: #ffffff; text-shadow: 0 1px 12px rgba(0,0,0,0.5); margin-top: 1.2rem; opacity: 0; animation: fadeUp 1s ease 0.9s forwards; }
+
+    /* Countdown embedded in hero */
+    .hero-countdown-label { font-family: 'Lato', sans-serif; font-weight: 300; font-size: clamp(0.75rem, 2vw, 0.9rem); letter-spacing: 0.08em; color: rgba(255,255,255,0.7); margin-top: 1.6rem; opacity: 0; animation: fadeUp 1s ease 1.1s forwards; }
+    .hero-countdown { display: flex; align-items: center; justify-content: flex-end; gap: 0; margin-top: 0.8rem; opacity: 0; animation: fadeUp 1s ease 1.2s forwards; }
+    .hcd-cell { text-align: center; padding: 0 clamp(1rem, 4vw, 2.8rem); }
+    .hcd-cell + .hcd-cell { border-left: 1px solid rgba(255,255,255,0.3); }
+    .hcd-num { font-family: 'Cinzel', serif; font-size: clamp(2.2rem, 8vw, 4rem); font-weight: 600; color: #ffffff; line-height: 1; display: block; text-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+    .hcd-lbl { font-family: 'Lato', sans-serif; font-weight: 300; font-size: clamp(0.6rem, 1.5vw, 0.72rem); letter-spacing: 0.2em; color: rgba(255,255,255,0.7); text-transform: uppercase; margin-top: 0.3rem; display: block; }
+
+    .scroll-cue { margin-top: 3rem; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; opacity: 0; animation: fadeUp 1s ease 1.5s forwards; }
+    .scroll-cue svg { animation: bounce 1.8s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+    .floral-corner { position: absolute; width: clamp(90px, 16vw, 170px); opacity: 0.5; z-index: 2; }
+    .floral-corner.tl { top:0; left:0; } .floral-corner.tr { top:0; right:0; transform:scaleX(-1); }
+    .floral-corner.bl { bottom:0; left:0; transform:scaleY(-1); } .floral-corner.br { bottom:0; right:0; transform:scale(-1,-1); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+    .floral-corner {
+      opacity: 0 !important;
+      pointer-events: none;
+    }
+    /* keep section-label for other sections */
+    .section-label { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); margin-bottom: 2.5rem; display: block; }
+
+    /* STORY */
+    #story { padding: 5.5rem 1.5rem; background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(201,168,76,0.07), transparent), var(--cream); }
+    .story-inner { max-width: 680px; margin: 0 auto; text-align: center; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 300; font-style: italic; color: var(--ink); margin-bottom: 0.8rem; }
+    .thin-rule { width: 60px; height: 1px; background: var(--gold); margin: 1.2rem auto 2.8rem; }
+    .story-text { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.1rem, 3vw, 1.45rem); line-height: 1.9; color: var(--mid); font-style: italic; }
+
+    /* DETAILS */
+    #details { padding: 5.5rem 1.5rem; text-align: center; max-width: 900px; margin: 0 auto; }
+    .events-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; margin-top: 2rem; max-width: 760px; margin-left: auto; margin-right: auto; }
+    .event-block { display: flex; flex-direction: column; }
+    .event-block .map-wrap { margin-top: 0; border-top: none; border-radius: 0 0 2px 2px; }
+    .event-block .event-card { border-radius: 2px 2px 0 0; border-bottom: none; }
+    .event-card { border: 1px solid rgba(201,168,76,0.3); padding: 2.5rem 2rem; position: relative; background: var(--white); }
+    .event-card::before { content:''; position: absolute; inset: 7px; border: 1px solid rgba(201,168,76,0.12); pointer-events: none; }
+    .event-icon { font-size: 1.6rem; margin-bottom: 1rem; display: block; }
+    .event-type { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.8rem; display: block; }
+    .event-name { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 400; color: var(--ink); margin-bottom: 0.8rem; }
+    .event-detail { font-size: 0.9rem; color: var(--muted); line-height: 1.75; }
+    .map-wrap { max-width: 100%; height: 280px; border: 1px solid rgba(201,168,76,0.25); overflow: hidden; }
+    .map-wrap iframe { width:100%; height:100%; border:none; }
+
+    /* GALLERY */
+    /* #gallery { overflow: hidden; padding: 3rem 0; }
+    .gallery-scroll { display: flex; gap: 1rem; padding: 0 1rem; animation: gallerySlide 30s linear infinite; width: max-content; }
+    @keyframes gallerySlide { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .gallery-item { width: clamp(160px, 28vw, 240px); height: clamp(200px, 36vw, 300px); background: var(--gold-dim); border-radius: 2px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--gold); font-size: 0.85rem; letter-spacing: 0.05em; }
+    .gallery-item img { width:100%; height:100%; object-fit:cover; } */
+
+    #gallery {
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--cream);
+      overflow: hidden;
     }
 
-    .result h2 {
-      font-size: clamp(30px, 4.5vw, 46px);
-      margin: 10px 0;
+    .single-photo-frame {
+      width: 170vw;
+      height: 500vh;
+
+      background-image:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,0.08),
+          rgba(0,0,0,0.12)
+        ),
+        url("IMG_3648.jpg");
+
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+
+      position: relative;
     }
 
-    .fireworks {
-      width: min(380px, 90vw);
-      margin: 0 auto;
-      display: block;
+    @media (max-width: 600px) {
+      .single-photo-frame {
+        width: 170vw;
+        height: 500vw;
+        background-position: center center;
+      }
     }
 
-    @keyframes pop {
-      from { transform: scale(.96); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    .single-photo-frame::before {
+      content: '';
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(201,168,76,0.15);
+      pointer-events: none;
     }
+
+    /* RSVP */
+    #rsvp { background: var(--ink); padding: 5.5rem 1.5rem; text-align: center; }
+    #rsvp .section-title { color: var(--cream); }
+    #rsvp .thin-rule { margin-bottom: 0.8rem; }
+    .rsvp-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 2.5rem; display: block; }
+    .rsvp-form { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
+    .rsvp-form input, .rsvp-form select, .rsvp-form textarea { background: rgba(250,247,239,0.07); border: 1px solid rgba(201,168,76,0.3); color: var(--cream); font-family: 'Lato', sans-serif; font-weight: 300; font-size: 0.9rem; padding: 0.85rem 1.1rem; border-radius: 2px; outline: none; transition: border-color 0.25s; width: 100%; }
+    .rsvp-form input::placeholder, .rsvp-form textarea::placeholder { color: rgba(250,247,239,0.3); }
+    .rsvp-form input:focus, .rsvp-form select:focus, .rsvp-form textarea:focus { border-color: var(--gold); }
+    .rsvp-form select option { background: var(--ink); }
+    .rsvp-form textarea { resize: vertical; min-height: 90px; }
+    .rsvp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .btn-gold { background: var(--gold); border: none; color: var(--ink); font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.35em; text-transform: uppercase; padding: 1rem 2rem; cursor: pointer; border-radius: 2px; transition: background 0.25s, transform 0.15s; margin-top: 0.5rem; }
+    .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .rsvp-success { display: none; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.4rem; color: var(--gold-light); padding: 2.5rem 1rem; line-height: 1.7; }
+
+    /* FOOTER */
+    footer { padding: 3rem 1.5rem; text-align: center; border-top: 1px solid rgba(201,168,76,0.15); }
+    .footer-names { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-style: italic; color: var(--gold); margin-bottom: 0.5rem; }
+    .footer-note { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; }
+
+    @media(max-width:480px) { .rsvp-row { grid-template-columns: 1fr; } }
   </style>
 </head>
-
 <body>
-  <canvas id="confettiCanvas"></canvas>
 
-  <main class="card">
-    <!-- ANIMAL WITH HEART -->
-    <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="fur" x1="0" x2="1">
-          <stop offset="0" stop-color="#f7c7a1"/>
-          <stop offset="1" stop-color="#f2a97b"/>
-        </linearGradient>
-        <linearGradient id="heart" x1="0" x2="1">
-          <stop offset="0" stop-color="#ff4d7d"/>
-          <stop offset="1" stop-color="#ff1f68"/>
-        </linearGradient>
-      </defs>
+<!-- Language bar -->
+<div id="lang-bar">
+  <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" data-lang="hy" onclick="setLang('hy')">ՀՅ</button>
+  <button class="lang-btn" data-lang="ru" onclick="setLang('ru')">RU</button>
+</div>
 
-      <path d="M250 50 C250 33 270 25 282 38
-               C294 25 314 33 314 50
-               C314 78 282 92 282 106
-               C282 92 250 78 250 50Z"
-            fill="url(#heart)"/>
+<!-- Floating petals (JS-generated) -->
+<script>
+  for(var i=0;i<14;i++){var p=document.createElement('div');p.className='petal';p.style.cssText='left:'+Math.random()*100+'%;width:'+(6+Math.random()*8)+'px;height:'+(8+Math.random()*10)+'px;animation-duration:'+(8+Math.random()*14)+'s;animation-delay:'+Math.random()*12+'s';document.body.appendChild(p);}
+</script>
 
-      <path d="M90 120 C90 70 140 40 190 60
-               C240 40 290 70 290 120
-               C290 180 240 210 190 210
-               C140 210 90 180 90 120Z"
-            fill="url(#fur)"/>
-
-      <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
-      <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
-
-      <circle cx="160" cy="130" r="8"/>
-      <circle cx="220" cy="130" r="8"/>
-
-      <path d="M190 144 C186 144 182 148 182 152
-               C182 160 190 164 190 170
-               C190 164 198 160 198 152
-               C198 148 194 144 190 144Z"
-            fill="#ff7aa2"/>
+<!-- ══════════════════════════════
+     ENVELOPE INTRO SCREEN
+══════════════════════════════ -->
+<div id="envelope-screen">
+  <div class="envelope-wrap" onclick="openEnvelope()">
+    <svg class="envelope-svg" viewBox="0 0 320 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="60" width="316" height="158" rx="3" fill="#2a2016" stroke="#c9a84c" stroke-width="1.2"/>
+      <g id="env-flap">
+        <path d="M2 60 L160 148 L318 60 Z" fill="#3a2e18" stroke="#c9a84c" stroke-width="1.2"/>
+      </g>
+      <path d="M2 218 L118 138 M318 218 L202 138" stroke="#c9a84c" stroke-width="0.7" opacity="0.45"/>
+      <circle cx="160" cy="148" r="24" fill="#c9a84c" opacity="0.92"/>
+      <text x="160" y="156" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="20" font-style="italic" fill="#1c1710">♡</text>
     </svg>
+    <p class="open-hint" data-key="open_hint">tap to open your invitation</p>
+  </div>
+</div>
 
-    <h1>Knarik, will you be my valentine?</h1>
+<!-- ══════════════════════════════
+     HERO — full screen photo background
+══════════════════════════════ -->
+<section id="hero">
+  <div id="hero-bg"></div>
 
-    <section class="button-zone" id="zone">
-      <button id="yesBtn">Yes</button>
-      <button id="noBtn">No</button>
-    </section>
+  <!-- Floral corners (on top of photo) -->
+  <svg class="floral-corner tl" viewBox="0 0 200 200" fill="none">
+    <path d="M0,0 Q80,0 160,80 Q185,125 200,200" stroke="#ffffff" stroke-width="0.8" fill="none"/>
+    <ellipse cx="60" cy="58" rx="8" ry="13" transform="rotate(-35 60 58)" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+    <ellipse cx="28" cy="98" rx="6" ry="10" transform="rotate(18 28 98)" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+    <ellipse cx="108" cy="28" rx="6" ry="10" transform="rotate(-62 108 28)" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+    <circle cx="42" cy="38" r="2.5" fill="#ffffff" opacity="0.6"/>
+  </svg>
+  <svg class="floral-corner tr" viewBox="0 0 200 200" fill="none">
+    <path d="M0,0 Q80,0 160,80 Q185,125 200,200" stroke="#ffffff" stroke-width="0.8" fill="none"/>
+    <ellipse cx="60" cy="58" rx="8" ry="13" transform="rotate(-35 60 58)" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+    <ellipse cx="28" cy="98" rx="6" ry="10" transform="rotate(18 28 98)" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+  </svg>
+  <svg class="floral-corner bl" viewBox="0 0 200 200" fill="none">
+    <path d="M0,0 Q80,0 160,80 Q185,125 200,200" stroke="#ffffff" stroke-width="0.8" fill="none"/>
+    <ellipse cx="108" cy="28" rx="6" ry="10" transform="rotate(-62 108 28)" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+  </svg>
+  <svg class="floral-corner br" viewBox="0 0 200 200" fill="none">
+    <path d="M0,0 Q80,0 160,80 Q185,125 200,200" stroke="#ffffff" stroke-width="0.8" fill="none"/>
+    <ellipse cx="60" cy="58" rx="8" ry="13" transform="rotate(-35 60 58)" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+  </svg>
 
-    <!-- HINT -->
-    <div class="hint" id="hint">“No” seems a bit shy 😢</div>
+  <!-- Content -->
 
-    <section class="result" id="result">
-      <h2>YAY! 🎉</h2>
-      <img
-        class="fireworks"
-        src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExcXE4aHpqMWxka25qbmV3aDhob2t2ejFrejJzNzRhaHkzbHkxamtqciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l2ZDUVbw657jD9bs4/giphy.gif"
-        alt="Fireworks"
-      />
-    </section>
-  </main>
+  <h1 class="names" data-key="names">Arno & Knarik</h1>
 
-  <script>
-    const zone = document.getElementById("zone");
-    const yesBtn = document.getElementById("yesBtn");
-    const noBtn = document.getElementById("noBtn");
-    const result = document.getElementById("result");
-    const hint = document.getElementById("hint");
+  <p class="hero-date" data-key="hero_date">Saturday, August 8, 2026</p>
 
-    /* ---------- CONFETTI ---------- */
-    const confettiCanvas = document.getElementById("confettiCanvas");
+  <p class="hero-countdown-label" data-key="countdown_label">The Wedding Day Countdown is On!</p>
+  <div class="hero-countdown">
+    <div class="hcd-cell"><span class="hcd-num" id="cd-days">--</span><span class="hcd-lbl" data-key="cd_days">Days</span></div>
+    <div class="hcd-cell"><span class="hcd-num" id="cd-hours">--</span><span class="hcd-lbl" data-key="cd_hours">Hours</span></div>
+    <div class="hcd-cell"><span class="hcd-num" id="cd-mins">--</span><span class="hcd-lbl" data-key="cd_mins">Minutes</span></div>
+    <div class="hcd-cell"><span class="hcd-num" id="cd-secs">--</span><span class="hcd-lbl" data-key="cd_secs">Seconds</span></div>
+  </div>
 
-    function resizeConfettiCanvas() {
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      confettiCanvas.width = Math.floor(window.innerWidth * dpr);
-      confettiCanvas.height = Math.floor(window.innerHeight * dpr);
-      confettiCanvas.style.width = "100vw";
-      confettiCanvas.style.height = "100vh";
+  <div class="scroll-cue">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</section>
+
+<!-- old #countdown removed — now embedded in hero -->
+
+<!-- ══════════════════════════════
+     OUR STORY
+══════════════════════════════ -->
+<section id="story">
+  <div class="story-inner">
+    <span class="section-label" data-key="story_label">our story</span>
+    <div class="thin-rule"></div>
+    <p class="story-text" data-key="story_text">
+      Life brought us together, and love kept us together. Through challenges, laughter, and countless memories, we found our home in each other. We warmly invite you to share this joyful day with us and celebrate the beginning of our forever.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     EVENT DETAILS
+══════════════════════════════ -->
+<section id="details">
+  <span class="section-label" data-key="details_label">the celebration</span>
+  <h2 class="section-title" data-key="details_title">Event Details</h2>
+  <div class="thin-rule"></div>
+  <div class="events-grid">
+    <div class="event-block">
+      <div class="event-card">
+        <span class="event-icon">⛪</span>
+        <span class="event-type" data-key="ceremony_type">ceremony</span>
+        <p class="event-name" data-key="ceremony_name">Holy Church</p>
+        <p class="event-detail">
+          <span data-key="ceremony_venue">Saint Gregory the Illuminator Cathedral</span><br/>
+          <span data-key="ceremony_city">Yerevan, Armenia</span><br/><br/>
+          <strong>15:00</strong>
+        </p>
+      </div>
+      <div class="map-wrap">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2905.752576874289!2d44.514664975824736!3d40.172157871480024!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x406abcf5dce61905%3A0x5b1b85523b3f82de!2z0KHQvtCx0L7RgCDQodCy0Y_RgtC-0LPQviDQk9GA0LjQs9C-0YDQuNGPINCf0YDQvtGB0LLQtdGC0LjRgtC10LvRjw!5e1!3m2!1sru!2sam!4v1780832217099!5m2!1sru!2sam" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+    <div class="event-block">
+      <div class="event-card">
+        <span class="event-icon">🥂</span>
+        <span class="event-type" data-key="reception_type">reception</span>
+        <p class="event-name" data-key="reception_name">The Banquet</p>
+        <p class="event-detail">
+          <span data-key="reception_venue">Avalon Hall &amp; Restaurant</span><br/>
+          <span data-key="reception_address">1 Ankaxutyan Street, Aramus, Kotayq</span><br/><br/>
+          <strong>17:30</strong>
+        </p>
+      </div>
+      <div class="map-wrap">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2902.2972729760218!2d44.64755687582901!3d40.25279337146651!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x406aa10a45863d83%3A0xbc7a58c42f2e2126!2sAvalon!5e1!3m2!1sru!2sam!4v1778349534532!5m2!1sru!2sam" width="600" height="320" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     PHOTO GALLERY STRIP
+══════════════════════════════ -->
+<section id="gallery">
+  <div class="single-photo-frame"></div>
+</section>
+
+<!-- ══════════════════════════════
+     RSVP
+══════════════════════════════ -->
+<section id="rsvp">
+  <span class="section-label" data-key="rsvp_label">RSVP</span>
+  <h2 class="section-title" data-key="rsvp_title">Will you join us?</h2>
+  <div class="thin-rule"></div>
+  <span class="rsvp-sub" data-key="rsvp_deadline">Please respond by July 20, 2026</span>
+  <form
+    class="rsvp-form"
+    id="rsvp-form"
+    name="rsvp"
+    method="POST"
+    data-netlify="true"
+    onsubmit="submitRSVP(event)"
+  >
+    <input type="hidden" name="form-name" value="rsvp">
+
+    <!-- Step 1: attending + guest count -->
+    <select name="attending" id="attending-select" required onchange="onAttendingChange()">
+      <option value="" disabled selected data-key="opt_attending">Attending?</option>
+      <option value="yes" data-key="opt_yes">Joyfully accept ✓</option>
+      <option value="no" data-key="opt_no">Regretfully decline</option>
+    </select>
+
+    <select name="guests" id="guest-count-select" onchange="buildGuestFields()" style="display:none;">
+      <option value="" disabled selected data-key="opt_guests_label">How many guests?</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+
+    <!-- Step 2: dynamic name fields -->
+    <div id="guest-fields"></div>
+
+    <!-- Step 3: phone + notes — global fields with extra top spacing -->
+    <select name="side" required style="margin-top:2rem;">
+      <option value="" disabled selected data-key="opt_side_label">Ում կողմից</option>
+      <option value="groom" data-key="opt_groom">Փեսա</option>
+      <option value="bride" data-key="opt_bride">Հարս</option>
+    </select>
+    <input type="tel" name="phone" data-ph-key="ph_phone" placeholder="Phone number" style="margin-top:1rem;"/>
+    <textarea name="notes" data-ph-key="ph_notes" placeholder="Dietary requirements or message..."></textarea>
+    <button type="submit" class="btn-gold" data-key="rsvp_btn">Send RSVP</button>
+  </form>
+  <div class="rsvp-success" id="rsvp-success">
+    <span data-key="rsvp_thanks">Thank you! We cannot wait to celebrate with you. ♡</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p class="footer-names" data-key="footer_names">Arno &amp; Knarik</p>
+  <p class="footer-note" data-key="footer_date">August 8, 2026 &nbsp;·&nbsp; Yerevan, Armenia</p>
+</footer>
+
+<script>
+// ─────────────────────────────
+// TRANSLATIONS
+// ─────────────────────────────
+const T = {
+  en: {
+    open_hint:"tap to open your invitation",
+    hero_date:"Saturday, August 8, 2026", scroll_hint:"scroll",
+    countdown_label:"counting down to forever", cd_days:"days", cd_hours:"hours", cd_mins:"minutes", cd_secs:"seconds",
+    story_label:"our story", story_text:"Two souls who met by chance, chose each other by heart. After five beautiful years of friendship, laughter, and love — we are ready to begin the greatest adventure of our lives, and we want you there with us.",
+    details_label:"the celebration", details_title:"Event Details",
+    ceremony_type:"ceremony", ceremony_name:"Holy Church", ceremony_venue:"Saint Gregory the Illuminator Cathedral", ceremony_city:"Yerevan, Armenia",
+    reception_type:"reception", reception_name:"The Banquet", reception_venue:"Avalon Hall &amp; Restaurant", reception_address:"1 Ankaxutyan Street, Aramus, Kotayq",
+    rsvp_title:"Will you join us?", rsvp_deadline:"Please respond by July 20", rsvp_btn:"Send RSVP",
+    opt_attending:"Attending?", opt_yes:"Joyfully accept ✓", opt_no:"Regretfully decline",
+    opt_1:"1 guest", opt_2:"2 guests", opt_3:"3 guests", opt_4:"4 guests", opt_5:"5 guests",
+    ph_fname:"First name *", ph_lname:"Last name *", ph_phone:"Phone number *", ph_notes:"Additional information...", ph_fullname:"Full name *",
+    rsvp_thanks:"Thank you! We cannot wait to celebrate with you. ♡",
+    names: "Arno & Knarik",
+    rsvp_label:"RSVP",
+    footer_names:"Arno & Knarik",
+    footer_date:"August 8, 2026 · Yerevan, Armenia",
+    guest_label:"Guest",
+    opt_guests_label:"How many guests?",
+    opt_side_label:"Guest of",
+    opt_groom:"Groom",
+    opt_bride:"Bride"
+  },
+  hy: {
+    open_hint:"բացել հրավիրատոմսը",
+    hero_date:"Շաբաթ, 8 Օգոստոս 2026", scroll_hint:"ոլորել",
+    countdown_label:"հաշվարկ", cd_days:"օր", cd_hours:"ժամ", cd_mins:"րոպե", cd_secs:"վայրկ.",
+    story_label:"մեր պատմությունը", story_text:"Կյանքը մեզ միավորեց, իսկ սերը՝ պահեց միասին։ Փորձությունների, ծիծաղի և անթիվ հիշողությունների ընթացքում մենք գտանք մեր տունը միմյանց մեջ։ Սիրով հրավիրում ենք ձեզ կիսելու մեզ հետ այս ուրախ օրը և նշելու մեր հավերժության սկիզբը:",
+    details_label:"հանդիսությունը", details_title:"Մանրամասներ",
+    ceremony_type:"արարողություն", ceremony_name:"Եկեղեցի", ceremony_venue:"Ս. Գրիգոր Լուսավորիչ եկեղեցի", ceremony_city:"ք․ Երևան",
+    reception_type:"Հանդիսություն", reception_name:"Ռեստորան", reception_venue:"Ավալոն ռեստորանային համալիր, բացօթյա սրահ", reception_address:"Անկախության 1, Արամուս, Կոտայք",
+    rsvp_title:"Կմասնակցե՞ք", rsvp_deadline:"Խնդրում ենք արձագանքել մինչև 20 Հուլիսի", rsvp_btn:"Ուղարկել",
+    opt_attending:"Կմասնակցե՞ք", opt_yes:"Ուրախությամբ ✓", opt_no:"Ցավով, ոչ",
+    opt_1:"1 hոգի", opt_2:"2 հոգի", opt_3:"3 hոգի", opt_4:"4 հոգի", opt_5:"5 հոգի", opt_6:"6 հոգի", opt_7:"7 հոգի", opt_8:"8 հոգի",
+    ph_fname:"Անուն *", ph_lname:"Ազգանուն *", ph_phone:"Հեռախոսահամար *", ph_notes:"Լրացուցիչ տեղեկատվություն...", ph_fullname:"Անուն Ազգանուն *",
+    rsvp_thanks:"Շնորհակալություն ♡",
+    names: "Առնո և Քնարիկ",
+    rsvp_label:"",
+    footer_names:"Առնո և Քնարիկ",
+    footer_date:"Օգոստոսի 8, 2026 · Երևան, Հայաստան",
+    guest_label:"Հյուր",
+    opt_guests_label:"Քանի՞ հոգի",
+    opt_side_label:"Ում կողմից",
+    opt_groom:"Փեսա",
+    opt_bride:"Հարս"
+  },
+  ru: {
+    open_hint:"нажмите, чтобы открыть",
+    hero_date:"Суббота, 8 Августа 2026", scroll_hint:"листайте",
+    countdown_label:"обратный отсчёт", cd_days:"дней", cd_hours:"часов", cd_mins:"минут", cd_secs:"секунд",
+    story_label:"наша история", story_text:"Жизнь свела нас вместе, а любовь сохранила нас рядом. Через испытания, смех и бесчисленные воспоминания мы обрели друг в друге свой дом. С любовью приглашаем вас разделить с нами этот радостный день и отпраздновать начало нашей вечности.",
+    details_label:"торжество", details_title:"Детали мероприятия",
+    ceremony_type:"церемония", ceremony_name:"Церковь", ceremony_venue:"Собор Святого Григория Просветителя", ceremony_city:"Ереван, Армения",
+    reception_type:"приём", reception_name:"Банкет", reception_venue:"Avalon Hall &amp; Restaurant", reception_address:"ул. Анкахутян 1, Арамус, Котайк",
+    rsvp_title:"Вы придёте?", rsvp_deadline:"Пожалуйста, ответьте до 20 июля 2026", rsvp_btn:"Отправить",
+    opt_attending:"Придёте?", opt_yes:"С удовольствием приду ✓", opt_no:"К сожалению, не смогу",
+    opt_1:"1 гость", opt_2:"2 гостя", opt_3:"3 гостя", opt_4:"4 гостя", opt_5:"5 гостей",
+    ph_fname:"Имя *", ph_lname:"Фамилия *", ph_phone:"Телефон *", ph_notes:"Дополнительная информация...", ph_fullname:"Имя Фамилия *",
+    rsvp_thanks:"Спасибо! С нетерпением ждём встречи с вами. ♡",
+    names: "Арно и Кнарик",
+    rsvp_label:"RSVP",
+    footer_names:"Арно и Кнарик",
+    footer_date:"8 Августа 2026 · Ереван, Армения",
+    guest_label:"Гость",
+    opt_guests_label:"Сколько гостей?",
+    opt_side_label:"Со стороны",
+    opt_groom:"Жениха",
+    opt_bride:"Невесты"
+  }
+};
+
+let lang = 'hy';
+
+function setLang(l) {
+  lang = l;
+
+  const t = T[l] || T.en;
+
+  // active button (clean + reliable)
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === l);
+  });
+
+  // text content
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const k = el.getAttribute('data-key');
+    if (t[k] !== undefined) el.textContent = t[k];
+  });
+
+  // placeholders
+  document.querySelectorAll('[data-ph-key]').forEach(el => {
+    const k = el.getAttribute('data-ph-key');
+    if (t[k] !== undefined) el.placeholder = t[k];
+  });
+
+  // Armenian-only font for the names header
+  const namesEl = document.querySelector('h1.names');
+  if (namesEl) {
+    namesEl.style.fontFamily = l === 'hy'
+      ? "'Times New Roman', Times, serif"
+      : "'Cormorant Garamond', Georgia, serif";
+  }
+
+  // Rebuild guest fields so placeholders reflect new language
+  buildGuestFields();
+}
+
+// ─────────────────────────────
+// ENVELOPE
+// ─────────────────────────────
+function openEnvelope() {
+  const s = document.getElementById('envelope-screen');
+  s.classList.add('hidden');
+  setTimeout(() => s.style.display = 'none', 900);
+}
+
+// ─────────────────────────────
+// COUNTDOWN
+// ─────────────────────────────
+// ★ CHANGE THIS DATE to your actual wedding date/time
+const weddingDate = new Date('2026-08-08T15:00:00');
+
+function tick() {
+  const diff = weddingDate - new Date();
+  if (diff <= 0) {
+    ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent = '00');
+    return;
+  }
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('cd-days').textContent  = pad(Math.floor(diff / 864e5));
+  document.getElementById('cd-hours').textContent = pad(Math.floor(diff % 864e5 / 36e5));
+  document.getElementById('cd-mins').textContent  = pad(Math.floor(diff % 36e5 / 6e4));
+  document.getElementById('cd-secs').textContent  = pad(Math.floor(diff % 6e4 / 1e3));
+}
+tick();
+setInterval(tick, 1000);
+
+// ─────────────────────────────
+// DYNAMIC GUEST FIELDS
+// ─────────────────────────────
+function onAttendingChange() {
+  const attending = document.getElementById('attending-select').value;
+  const guestCountSelect = document.getElementById('guest-count-select');
+  if (attending === 'yes') {
+    guestCountSelect.style.display = '';
+  } else {
+    guestCountSelect.style.display = 'none';
+    guestCountSelect.value = '';
+    document.getElementById('guest-fields').innerHTML = '';
+  }
+}
+
+function buildGuestFields() {
+  const count = parseInt(document.getElementById('guest-count-select').value) || 0;
+  const container = document.getElementById('guest-fields');
+  const t = T[lang] || T.en;
+  const fullNamePlaceholder = t.ph_fullname || 'Full name *';
+
+  container.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const label = document.createElement('p');
+    label.style.cssText = 'font-family:"Cinzel",serif;font-size:0.65rem;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin:1rem 0 0.4rem;text-align:left;';
+    label.textContent = (t.guest_label || 'Guest') + ' ' + i;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = `guest_${i}_name`;
+    input.placeholder = fullNamePlaceholder;
+    input.required = true;
+
+    container.appendChild(label);
+    container.appendChild(input);
+  }
+}
+
+// ─────────────────────────────
+// RSVP FORM
+// ─────────────────────────────
+function encode(data) {
+  return Object.keys(data)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+}
+
+function submitRSVP(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const btn = form.querySelector('button[type="submit"]');
+
+  // Build plain object from FormData
+  const payload = { 'form-name': 'rsvp' };
+  formData.forEach((value, key) => { payload[key] = value; });
+
+  // Show loading state
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  fetch("/", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: encode(payload)
+  })
+  .then(() => {
+    const count = parseInt(formData.get("guests")) || 0;
+    const phone = formData.get("phone");
+    const attending = formData.get("attending");
+    const side = formData.get("side");
+    const notes = formData.get("notes");
+    const t = T[lang] || T.en;
+
+    let guestLines = '';
+    for (let i = 1; i <= count; i++) {
+      const fn = formData.get(`guest_${i}_name`) || '';
+      guestLines += `<p><strong>${t.guest_label || 'Guest'} ${i}:</strong> ${fn}</p>`;
     }
 
-    resizeConfettiCanvas();
-    window.addEventListener("resize", resizeConfettiCanvas);
-    window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 150));
+    document.getElementById("rsvp-form").style.display = "none";
+    document.getElementById("rsvp-success").innerHTML = `
+      <h3>${t.rsvp_thanks || 'Thank you! ♡'}</h3>
+      ${guestLines}
+      ${phone ? `<p><strong>${t.ph_phone || 'Phone'}:</strong> ${phone}</p>` : ''}
+      ${side ? `<p><strong>${t.opt_side_label || 'Side'}:</strong> ${side === 'groom' ? (t.opt_groom || 'Groom') : (t.opt_bride || 'Bride')}</p>` : ''}
+      ${notes ? `<p><strong>${t.ph_notes ? '' : 'Note:'}</strong> ${notes}</p>` : ''}
+    `;
+    document.getElementById("rsvp-success").style.display = "block";
+  })
+  .catch(error => {
+    console.error(error);
+    btn.disabled = false;
+    btn.setAttribute('data-key', 'rsvp_btn');
+    const t = T[lang] || T.en;
+    btn.textContent = t.rsvp_btn || 'Send RSVP';
+    alert("There was a problem submitting the form. Please try again.");
+  });
+}
 
-    const confettiInstance = confetti.create(confettiCanvas, {
-      resize: false,
-      useWorker: true
-    });
-
-    function fullScreenConfetti() {
-      const end = Date.now() + 1600;
-
-      (function frame() {
-        confettiInstance({
-          particleCount: 12,
-          spread: 90,
-          startVelocity: 45,
-          ticks: 180,
-          origin: { x: Math.random(), y: Math.random() * 0.3 }
-        });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      })();
-
-      setTimeout(() => {
-        confettiInstance({
-          particleCount: 300,
-          spread: 140,
-          startVelocity: 60,
-          ticks: 220,
-          origin: { x: 0.5, y: 0.55 }
-        });
-      }, 300);
+// ─────────────────────────────
+// SCROLL REVEAL
+// ─────────────────────────────
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
     }
+  });
+}, { threshold: 0.1 });
 
-    /* ---------- YES BUTTON GROWS ---------- */
-    let yesScale = 1;
-    function growYes() {
-      yesScale = Math.min(2.2, yesScale + 0.1);
-      yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
-    }
+document.querySelectorAll('.event-card, .story-inner, .map-wrap, .rsvp-form').forEach(el => {
+  el.style.cssText += ';opacity:0;transform:translateY(30px);transition:opacity 0.9s ease,transform 0.9s ease';
+  obs.observe(el);
+});
 
-    /* ---------- NO BUTTON RUNS AWAY ---------- */
-    function clamp(n, min, max) {
-      return Math.max(min, Math.min(max, n));
-    }
+window.addEventListener('DOMContentLoaded', () => {
+  setLang('hy');
+});
 
-    function moveNo(px, py) {
-      const z = zone.getBoundingClientRect();
-      const b = noBtn.getBoundingClientRect();
-
-      let dx = (b.left + b.width / 2) - px;
-      let dy = (b.top + b.height / 2) - py;
-      let mag = Math.hypot(dx, dy) || 1;
-      dx /= mag;
-      dy /= mag;
-
-      let newLeft = (b.left - z.left) + dx * 150;
-      let newTop  = (b.top - z.top) + dy * 150;
-
-      newLeft = clamp(newLeft, 0, z.width - b.width);
-      newTop  = clamp(newTop, 0, z.height - b.height);
-
-      noBtn.style.left = newLeft + "px";
-      noBtn.style.top = newTop + "px";
-      noBtn.style.transform = "none";
-
-      growYes();
-    }
-
-    zone.addEventListener("pointermove", e => {
-      const b = noBtn.getBoundingClientRect();
-      const d = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top + b.height / 2) - e.clientY
-      );
-      if (d < 140) moveNo(e.clientX, e.clientY);
-    });
-
-    noBtn.addEventListener("click", e => e.preventDefault());
-
-    /* ---------- YES CLICK ---------- */
-    yesBtn.addEventListener("click", () => {
-      zone.style.display = "none";
-      hint.style.display = "none";     // HIDE THE HINT
-      result.style.display = "block";
-      resizeConfettiCanvas();
-      fullScreenConfetti();
-    });
-  </script>
+</script>
 </body>
 </html>
-
-
-
